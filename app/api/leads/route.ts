@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db, leads } from '@/lib/db';
-import { desc } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 
 export async function GET() {
   try {
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       availability: availability || null,
       noticePeriod: noticePeriod || null,
       workRights: workRights || null,
-      vevoCopy: vevoCopy || 'no',
+      vevoCopy: vevoCopy || 'not_yet',
       resumeSent: resumeSent || 'not_yet',
       responseNotes: responseNotes || null,
       status: 'new',
@@ -68,5 +68,43 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true }, { status: 201 });
   } catch {
     return NextResponse.json({ error: 'Failed to save lead' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json();
+    const { id, ...rest } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
+
+    db.update(leads).set({
+      ...rest,
+      theyAskedFor: Array.isArray(rest.theyAskedFor)
+        ? rest.theyAskedFor.join(',')
+        : rest.theyAskedFor,
+    }).where(eq(leads.id, id)).run();
+
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: 'Failed to update lead' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
+
+    db.delete(leads).where(eq(leads.id, parseInt(id))).run();
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: 'Failed to delete lead' }, { status: 500 });
   }
 }

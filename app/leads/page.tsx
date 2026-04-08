@@ -61,12 +61,11 @@ const emptyForm = {
   availability: '',
   noticePeriod: '',
   workRights: '',
-  vevoCopy: 'no',
+  vevoCopy: 'not_yet',
   resumeSent: 'not_yet',
   responseNotes: '',
 };
 
-// Helper — label for employment type rate field
 const rateLabel = (empType: string) => {
   if (empType === 'contract_daily') return '💰 Daily Rate';
   if (empType === 'contract_hourly') return '💰 Hourly Rate';
@@ -79,15 +78,17 @@ const ratePlaceholder = (empType: string) => {
   return 'e.g. $185k + super';
 };
 
+const today = new Date().toISOString().split('T')[0];
+
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [mounted, setMounted] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
 
   const fetchLeads = async () => {
     const res = await fetch('/api/leads');
@@ -109,20 +110,54 @@ export default function LeadsPage() {
     }));
   };
 
+  const handleEdit = (lead: Lead) => {
+    setEditingId(lead.id);
+    setForm({
+      ...emptyForm,
+      ...lead,
+      theyAskedFor: lead.theyAskedFor
+        ? lead.theyAskedFor.split(',')
+        : [],
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+  };
+
   const handleSubmit = async () => {
     if (!form.company || !form.role) {
       alert('Please enter at least company and role');
       return;
     }
     setLoading(true);
-    await fetch('/api/leads', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
+
+    if (editingId) {
+      await fetch('/api/leads', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingId, ...form }),
+      });
+      setEditingId(null);
+    } else {
+      await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+    }
+
     setForm(emptyForm);
     await fetchLeads();
     setLoading(false);
+  };
+
+  const handleDelete = async (id: number) => {
+    await fetch(`/api/leads?id=${id}`, { method: 'DELETE' });
+    setDeleteConfirmId(null);
+    await fetchLeads();
   };
 
   const priorityColor = (priority: string) => {
@@ -178,6 +213,20 @@ export default function LeadsPage() {
         {/* Form */}
         <div className="bg-white/10 rounded-2xl p-6 mb-8 space-y-4">
 
+          {/* Edit mode banner */}
+          {editingId && (
+            <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-xl px-4 py-3 flex items-center justify-between">
+              <span className="text-yellow-300 text-sm font-semibold">✏️ Editing lead — make your changes and save</span>
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="text-yellow-300 hover:text-white text-sm underline"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+
           {/* Common Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -223,12 +272,8 @@ export default function LeadsPage() {
                 <option value="contract_annual">📋 Contract - Annual CTC</option>
               </select>
             </div>
-
-            {/* Rate field — shown for all types */}
             <div>
-              <label className="text-sm text-slate-300 mb-1 block">
-                {rateLabel(form.employmentType)}
-              </label>
+              <label className="text-sm text-slate-300 mb-1 block">{rateLabel(form.employmentType)}</label>
               <input
                 className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder={ratePlaceholder(form.employmentType)}
@@ -236,8 +281,6 @@ export default function LeadsPage() {
                 onChange={e => setForm({ ...form, rateAmount: e.target.value })}
               />
             </div>
-
-            {/* Contract duration — only for contracts */}
             {form.employmentType !== 'permanent' && (
               <div>
                 <label className="text-sm text-slate-300 mb-1 block">Contract Duration</label>
@@ -249,7 +292,6 @@ export default function LeadsPage() {
                 />
               </div>
             )}
-
             <div>
               <label className="text-sm text-slate-300 mb-1 block">Work Arrangement</label>
               <select
@@ -262,18 +304,13 @@ export default function LeadsPage() {
                 <option value="onsite">🏢 Onsite</option>
               </select>
             </div>
-
             <div>
               <label className="text-sm text-slate-300 mb-1 block">
                 {form.workArrangement === 'remote' ? '🌏 Remote - Country Restriction' : '📍 Location'}
               </label>
               <input
                 className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder={
-                  form.workArrangement === 'remote'
-                    ? 'e.g. Australia only / Worldwide'
-                    : 'e.g. CBD, Pyrmont, Surry Hills'
-                }
+                placeholder={form.workArrangement === 'remote' ? 'e.g. Australia only / Worldwide' : 'e.g. CBD, Pyrmont, Surry Hills'}
                 value={form.location}
                 onChange={e => setForm({ ...form, location: e.target.value })}
               />
@@ -301,14 +338,14 @@ export default function LeadsPage() {
               <div>
                 <label className="text-sm text-slate-300 mb-1 block">
                   {form.source === 'referral' ? '👤 Referred by' :
-                    form.source === 'community' ? '💬 Where' : '🔗 URL'}
+                   form.source === 'community' ? '💬 Where' : '🔗 URL'}
                 </label>
                 <input
                   className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   placeholder={
                     form.source === 'referral' ? 'e.g. John Smith (ex-Atlassian)' :
-                      form.source === 'community' ? 'e.g. Sydney Tech Jobs Slack' :
-                        'https://...'
+                    form.source === 'community' ? 'e.g. Sydney Tech Jobs Slack' :
+                    'https://...'
                   }
                   value={form.url}
                   onChange={e => setForm({ ...form, url: e.target.value })}
@@ -318,7 +355,7 @@ export default function LeadsPage() {
                 <label className="text-sm text-slate-300 mb-1 block">⏰ Apply Before</label>
                 <input
                   type="date"
-                  min={new Date().toISOString().split('T')[0]}
+                  min={today}
                   className="w-full bg-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
                   value={form.applyBefore}
                   onChange={e => setForm({ ...form, applyBefore: e.target.value })}
@@ -355,15 +392,15 @@ export default function LeadsPage() {
                 <div>
                   <label className="text-sm text-slate-300 mb-1 block">
                     {form.contactVia === 'email' ? '📧 Their Email' :
-                      form.contactVia === 'phone' ? '📞 Their Number' :
-                        '💼 Their LinkedIn'}
+                     form.contactVia === 'phone' ? '📞 Their Number' :
+                     '💼 Their LinkedIn'}
                   </label>
                   <input
                     className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     placeholder={
                       form.contactVia === 'email' ? 'recruiter@company.com' :
-                        form.contactVia === 'phone' ? '+61 4XX XXX XXX' :
-                          'linkedin.com/in/...'
+                      form.contactVia === 'phone' ? '+61 4XX XXX XXX' :
+                      'linkedin.com/in/...'
                     }
                     value={form.contactDetail}
                     onChange={e => setForm({ ...form, contactDetail: e.target.value })}
@@ -373,7 +410,7 @@ export default function LeadsPage() {
                   <label className="text-sm text-slate-300 mb-1 block">⏰ Respond By</label>
                   <input
                     type="date"
-                    min={new Date().toISOString().split('T')[0]}
+                    min={today}
                     className="w-full bg-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
                     value={form.respondBy}
                     onChange={e => setForm({ ...form, respondBy: e.target.value })}
@@ -387,29 +424,26 @@ export default function LeadsPage() {
                 <div className="flex flex-wrap gap-2">
                   {['Resume', 'Current CTC/Rate', 'Expected CTC/Rate', 'Availability',
                     'Notice Period', 'Work Rights', 'VEVO Copy'].map(item => (
-                      <button
-                        key={item}
-                        type="button"
-                        onClick={() => toggleAskedFor(item)}
-                        className={`px-3 py-1 rounded-full text-sm transition ${form.theyAskedFor.includes(item)
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-white/10 text-slate-300 hover:bg-white/20'
-                          }`}
-                      >
-                        {item}
-                      </button>
-                    ))}
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => toggleAskedFor(item)}
+                      className={`px-3 py-1 rounded-full text-sm transition ${
+                        form.theyAskedFor.includes(item)
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-white/10 text-slate-300 hover:bg-white/20'
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  ))}
                 </div>
               </div>
 
               {/* Your responses */}
               <div className="border-t border-white/10 pt-4">
-                <label className="text-sm text-blue-300 mb-3 block font-semibold">
-                  📝 What you responded
-                </label>
+                <label className="text-sm text-blue-300 mb-3 block font-semibold">📝 What you responded</label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                  {/* Current role */}
                   <div>
                     <label className="text-sm text-slate-300 mb-1 block">Your Current Role Type</label>
                     <select
@@ -423,11 +457,8 @@ export default function LeadsPage() {
                       <option value="contract_annual">📋 Contract - Annual CTC</option>
                     </select>
                   </div>
-
                   <div>
-                    <label className="text-sm text-slate-300 mb-1 block">
-                      {rateLabel(form.currentRoleType)} (Current)
-                    </label>
+                    <label className="text-sm text-slate-300 mb-1 block">{rateLabel(form.currentRoleType)} (Current)</label>
                     <input
                       className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
                       placeholder={ratePlaceholder(form.currentRoleType)}
@@ -435,12 +466,8 @@ export default function LeadsPage() {
                       onChange={e => setForm({ ...form, currentRate: e.target.value })}
                     />
                   </div>
-
-                  {/* Expected for new role */}
                   <div>
-                    <label className="text-sm text-slate-300 mb-1 block">
-                      {rateLabel(form.employmentType)} (Expected)
-                    </label>
+                    <label className="text-sm text-slate-300 mb-1 block">{rateLabel(form.employmentType)} (Expected)</label>
                     <input
                       className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
                       placeholder={ratePlaceholder(form.employmentType)}
@@ -448,7 +475,6 @@ export default function LeadsPage() {
                       onChange={e => setForm({ ...form, expectedRate: e.target.value })}
                     />
                   </div>
-
                   <div>
                     <label className="text-sm text-slate-300 mb-1 block">Availability</label>
                     <input
@@ -458,7 +484,6 @@ export default function LeadsPage() {
                       onChange={e => setForm({ ...form, availability: e.target.value })}
                     />
                   </div>
-
                   <div>
                     <label className="text-sm text-slate-300 mb-1 block">Notice Period</label>
                     <input
@@ -468,7 +493,6 @@ export default function LeadsPage() {
                       onChange={e => setForm({ ...form, noticePeriod: e.target.value })}
                     />
                   </div>
-
                   <div>
                     <label className="text-sm text-slate-300 mb-1 block">Work Rights</label>
                     <input
@@ -478,7 +502,6 @@ export default function LeadsPage() {
                       onChange={e => setForm({ ...form, workRights: e.target.value })}
                     />
                   </div>
-
                   <div>
                     <label className="text-sm text-slate-300 mb-1 block">Resume Sent?</label>
                     <select
@@ -490,7 +513,6 @@ export default function LeadsPage() {
                       <option value="yes">✅ Yes</option>
                     </select>
                   </div>
-
                   <div>
                     <label className="text-sm text-slate-300 mb-1 block">VEVO Copy Sent?</label>
                     <select
@@ -502,7 +524,6 @@ export default function LeadsPage() {
                       <option value="yes">✅ Yes</option>
                     </select>
                   </div>
-
                   <div className="md:col-span-2">
                     <label className="text-sm text-slate-300 mb-1 block">Response Notes</label>
                     <textarea
@@ -518,7 +539,7 @@ export default function LeadsPage() {
             </div>
           )}
 
-          {/* Notes — always visible */}
+          {/* Notes */}
           <div className="pt-4 border-t border-white/10">
             <label className="text-sm text-slate-300 mb-1 block">Notes</label>
             <textarea
@@ -536,7 +557,7 @@ export default function LeadsPage() {
             disabled={loading}
             className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-800 text-white font-semibold py-3 rounded-xl transition"
           >
-            {loading ? 'Saving...' : '⚡ Save Lead'}
+            {loading ? 'Saving...' : editingId ? '✏️ Update Lead' : '⚡ Save Lead'}
           </button>
         </div>
 
@@ -551,6 +572,30 @@ export default function LeadsPage() {
           <div className="space-y-4">
             {leads.map(lead => (
               <div key={lead.id} className="bg-white/10 rounded-2xl p-5 hover:bg-white/15 transition">
+
+                {/* Delete confirmation */}
+                {deleteConfirmId === lead.id && (
+                  <div className="bg-red-500/20 border border-red-500/40 rounded-xl px-4 py-3 mb-3 flex items-center justify-between">
+                    <span className="text-red-300 text-sm">Are you sure you want to delete this lead?</span>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(lead.id)}
+                        className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded-lg"
+                      >
+                        Yes, delete
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteConfirmId(null)}
+                        className="bg-white/10 hover:bg-white/20 text-white text-sm px-3 py-1 rounded-lg"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -568,18 +613,15 @@ export default function LeadsPage() {
                       {lead.workArrangement && (
                         <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full">
                           {lead.workArrangement === 'remote' ? '🏠 Remote' :
-                            lead.workArrangement === 'hybrid' ? '🔄 Hybrid' : '🏢 Onsite'}
+                           lead.workArrangement === 'hybrid' ? '🔄 Hybrid' : '🏢 Onsite'}
                         </span>
                       )}
                     </div>
                     <p className="text-blue-200 mt-1">{lead.role}</p>
-                    {lead.location && (
-                      <p className="text-slate-400 text-sm mt-1">📍 {lead.location}</p>
-                    )}
+                    {lead.location && <p className="text-slate-400 text-sm mt-1">📍 {lead.location}</p>}
                     {lead.rateAmount && (
                       <p className="text-green-400 text-sm mt-1">
-                        💰 {lead.rateAmount}
-                        {lead.contractDuration ? ` · ${lead.contractDuration}` : ''}
+                        💰 {lead.rateAmount}{lead.contractDuration ? ` · ${lead.contractDuration}` : ''}
                       </p>
                     )}
                     {lead.type === 'inbound' && lead.contactName && (
@@ -600,19 +642,34 @@ export default function LeadsPage() {
                         🔗 View posting
                       </a>
                     )}
-                    {lead.notes && (
-                      <p className="text-slate-400 text-sm mt-2">📝 {lead.notes}</p>
-                    )}
+                    {lead.notes && <p className="text-slate-400 text-sm mt-2">📝 {lead.notes}</p>}
                   </div>
-                  <span className="text-xs text-slate-500 ml-4">
-                    {new Date(lead.createdAt).toLocaleDateString()}
-                  </span>
+
+                  {/* Actions */}
+                  <div className="flex flex-col gap-2 ml-4">
+                    <span className="text-xs text-slate-500">
+                      {new Date(lead.createdAt).toLocaleDateString()}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(lead)}
+                      className="text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg transition"
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteConfirmId(lead.id)}
+                      className="text-xs bg-red-500/20 hover:bg-red-500/40 text-red-300 px-3 py-1 rounded-lg transition"
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
-
       </div>
     </main>
   );
