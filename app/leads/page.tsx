@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 type Lead = {
   id: number;
@@ -34,6 +35,7 @@ export default function LeadsPage() {
 
   useEffect(() => {
     fetchLeads();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSubmit = async () => {
@@ -70,7 +72,7 @@ export default function LeadsPage() {
 
         {/* Header */}
         <div className="mb-8">
-          <a href="/" className="text-blue-300 text-sm hover:underline">← Back to Home</a>
+          <Link href="/" className="text-blue-300 text-sm hover:underline">← Back to Home</Link>
           <h1 className="text-3xl font-bold mt-2">⚡ Quick Capture</h1>
           <p className="text-slate-400 mt-1">Spotted a role? Save it in seconds before it slips away.</p>
         </div>
@@ -103,11 +105,13 @@ export default function LeadsPage() {
                 value={form.source}
                 onChange={e => setForm({ ...form, source: e.target.value })}
               >
-                <option value="linkedin">LinkedIn</option>
-                <option value="email">Email</option>
-                <option value="referral">Referral</option>
-                <option value="seek">Seek</option>
-                <option value="other">Other</option>
+                <option value="linkedin">💼 LinkedIn</option>
+                <option value="seek">🔍 Seek</option>
+                <option value="careers_page">🏢 Company Career Page</option>
+                <option value="recruiter_outreach">📩 Recruiter Outreach</option>
+                <option value="referral">👤 Referral</option>
+                <option value="community">💬 Community / Event</option>
+                <option value="other">🌐 Other</option>
               </select>
             </div>
             <div>
@@ -125,15 +129,19 @@ export default function LeadsPage() {
             <div className="md:col-span-2">
               <label className="text-sm text-slate-300 mb-1 block">
                 {form.source === 'referral' && '👤 Referred by'}
-                {form.source === 'email' && '📧 Email received from'}
-                {!['referral', 'email'].includes(form.source) && '🔗 URL'}
+                {form.source === 'recruiter_outreach' && '📧 Recruiter email / phone'}
+                {form.source === 'community' && '💬 Event or group name'}
+                {form.source === 'other' && '🌐 Where from?'}
+                {!['referral', 'recruiter_outreach', 'community', 'other'].includes(form.source) && '🔗 URL'}
               </label>
               <input
                 className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder={
                   form.source === 'referral' ? 'e.g. John Smith (ex-Atlassian)' :
-                  form.source === 'email' ? 'e.g. recruiter@canva.com' :
-                  'https://linkedin.com/...'
+                  form.source === 'recruiter_outreach' ? 'e.g. recruiter@canva.com or 0412 345 678' :
+                  form.source === 'community' ? 'e.g. Sydney Tech Jobs Slack' :
+                  form.source === 'other' ? 'e.g. WhatsApp group, SMS' :
+                  'https://...'
                 }
                 value={form.url}
                 onChange={e => setForm({ ...form, url: e.target.value })}
