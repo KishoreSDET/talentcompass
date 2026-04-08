@@ -5,27 +5,89 @@ import Link from 'next/link';
 
 type Lead = {
   id: number;
+  type: string;
   company: string;
   role: string;
+  priority: string;
+  notes: string;
   source: string;
   url: string;
-  notes: string;
-  priority: string;
+  applyBefore: string;
+  employmentType: string;
+  rateAmount: string;
+  contractDuration: string;
+  workArrangement: string;
+  location: string;
+  contactName: string;
+  contactVia: string;
+  contactDetail: string;
+  theyAskedFor: string;
+  respondBy: string;
+  currentRoleType: string;
+  currentRate: string;
+  expectedRate: string;
+  availability: string;
+  noticePeriod: string;
+  workRights: string;
+  vevoCopy: string;
+  resumeSent: string;
+  responseNotes: string;
   status: string;
   createdAt: string;
+};
+
+const emptyForm = {
+  type: 'outbound',
+  company: '',
+  role: '',
+  priority: 'warm',
+  notes: '',
+  source: 'linkedin',
+  url: '',
+  applyBefore: '',
+  employmentType: 'permanent',
+  rateAmount: '',
+  contractDuration: '',
+  workArrangement: 'hybrid',
+  location: '',
+  contactName: '',
+  contactVia: 'email',
+  contactDetail: '',
+  theyAskedFor: [] as string[],
+  respondBy: '',
+  currentRoleType: 'permanent',
+  currentRate: '',
+  expectedRate: '',
+  availability: '',
+  noticePeriod: '',
+  workRights: '',
+  vevoCopy: 'no',
+  resumeSent: 'not_yet',
+  responseNotes: '',
+};
+
+// Helper — label for employment type rate field
+const rateLabel = (empType: string) => {
+  if (empType === 'contract_daily') return '💰 Daily Rate';
+  if (empType === 'contract_hourly') return '💰 Hourly Rate';
+  return '💰 Annual CTC';
+};
+
+const ratePlaceholder = (empType: string) => {
+  if (empType === 'contract_daily') return 'e.g. $850/day + super';
+  if (empType === 'contract_hourly') return 'e.g. $120/hr + super';
+  return 'e.g. $185k + super';
 };
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
-    company: '',
-    role: '',
-    source: 'linkedin',
-    url: '',
-    notes: '',
-    priority: 'warm',
-  });
+  const [form, setForm] = useState(emptyForm);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchLeads = async () => {
     const res = await fetch('/api/leads');
@@ -38,6 +100,15 @@ export default function LeadsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const toggleAskedFor = (item: string) => {
+    setForm(prev => ({
+      ...prev,
+      theyAskedFor: prev.theyAskedFor.includes(item)
+        ? prev.theyAskedFor.filter(i => i !== item)
+        : [...prev.theyAskedFor, item],
+    }));
+  };
+
   const handleSubmit = async () => {
     if (!form.company || !form.role) {
       alert('Please enter at least company and role');
@@ -49,7 +120,7 @@ export default function LeadsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
     });
-    setForm({ company: '', role: '', source: 'linkedin', url: '', notes: '', priority: 'warm' });
+    setForm(emptyForm);
     await fetchLeads();
     setLoading(false);
   };
@@ -66,6 +137,15 @@ export default function LeadsPage() {
     return '❄️';
   };
 
+  const empTypeLabel = (empType: string) => {
+    if (empType === 'contract_daily') return '📋 Contract (Daily)';
+    if (empType === 'contract_hourly') return '📋 Contract (Hourly)';
+    if (empType === 'contract_annual') return '📋 Contract (Annual)';
+    return '💼 Permanent';
+  };
+
+  if (!mounted) return null;
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 to-blue-900 text-white p-6">
       <div className="max-w-3xl mx-auto">
@@ -77,8 +157,28 @@ export default function LeadsPage() {
           <p className="text-slate-400 mt-1">Spotted a role? Save it in seconds before it slips away.</p>
         </div>
 
+        {/* Type Toggle */}
+        <div className="flex gap-3 mb-6">
+          <button
+            type="button"
+            onClick={() => setForm(prev => ({ ...prev, type: 'outbound' }))}
+            className={`flex-1 py-3 rounded-xl font-semibold transition ${form.type === 'outbound' ? 'bg-blue-500' : 'bg-white/10 hover:bg-white/20'}`}
+          >
+            🔍 I Found a Role
+          </button>
+          <button
+            type="button"
+            onClick={() => setForm(prev => ({ ...prev, type: 'inbound' }))}
+            className={`flex-1 py-3 rounded-xl font-semibold transition ${form.type === 'inbound' ? 'bg-blue-500' : 'bg-white/10 hover:bg-white/20'}`}
+          >
+            📩 Someone Reached Out
+          </button>
+        </div>
+
         {/* Form */}
-        <div className="bg-white/10 rounded-2xl p-6 mb-8">
+        <div className="bg-white/10 rounded-2xl p-6 mb-8 space-y-4">
+
+          {/* Common Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm text-slate-300 mb-1 block">Company *</label>
@@ -99,22 +199,6 @@ export default function LeadsPage() {
               />
             </div>
             <div>
-              <label className="text-sm text-slate-300 mb-1 block">Source</label>
-              <select
-                className="w-full bg-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={form.source}
-                onChange={e => setForm({ ...form, source: e.target.value })}
-              >
-                <option value="linkedin">💼 LinkedIn</option>
-                <option value="seek">🔍 Seek</option>
-                <option value="careers_page">🏢 Company Career Page</option>
-                <option value="recruiter_outreach">📩 Recruiter Outreach</option>
-                <option value="referral">👤 Referral</option>
-                <option value="community">💬 Community / Event</option>
-                <option value="other">🌐 Other</option>
-              </select>
-            </div>
-            <div>
               <label className="text-sm text-slate-300 mb-1 block">Priority</label>
               <select
                 className="w-full bg-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -126,42 +210,331 @@ export default function LeadsPage() {
                 <option value="maybe">❄️ Maybe</option>
               </select>
             </div>
-            <div className="md:col-span-2">
+            <div>
+              <label className="text-sm text-slate-300 mb-1 block">Employment Type</label>
+              <select
+                className="w-full bg-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={form.employmentType}
+                onChange={e => setForm({ ...form, employmentType: e.target.value })}
+              >
+                <option value="permanent">💼 Permanent</option>
+                <option value="contract_daily">📋 Contract - Daily Rate</option>
+                <option value="contract_hourly">📋 Contract - Hourly Rate</option>
+                <option value="contract_annual">📋 Contract - Annual CTC</option>
+              </select>
+            </div>
+
+            {/* Rate field — shown for all types */}
+            <div>
               <label className="text-sm text-slate-300 mb-1 block">
-                {form.source === 'referral' && '👤 Referred by'}
-                {form.source === 'recruiter_outreach' && '📧 Recruiter email / phone'}
-                {form.source === 'community' && '💬 Event or group name'}
-                {form.source === 'other' && '🌐 Where from?'}
-                {!['referral', 'recruiter_outreach', 'community', 'other'].includes(form.source) && '🔗 URL'}
+                {rateLabel(form.employmentType)}
+              </label>
+              <input
+                className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder={ratePlaceholder(form.employmentType)}
+                value={form.rateAmount}
+                onChange={e => setForm({ ...form, rateAmount: e.target.value })}
+              />
+            </div>
+
+            {/* Contract duration — only for contracts */}
+            {form.employmentType !== 'permanent' && (
+              <div>
+                <label className="text-sm text-slate-300 mb-1 block">Contract Duration</label>
+                <input
+                  className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  placeholder="e.g. 6 months, 12 months"
+                  value={form.contractDuration}
+                  onChange={e => setForm({ ...form, contractDuration: e.target.value })}
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="text-sm text-slate-300 mb-1 block">Work Arrangement</label>
+              <select
+                className="w-full bg-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={form.workArrangement}
+                onChange={e => setForm({ ...form, workArrangement: e.target.value })}
+              >
+                <option value="hybrid">🔄 Hybrid</option>
+                <option value="remote">🏠 Remote</option>
+                <option value="onsite">🏢 Onsite</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm text-slate-300 mb-1 block">
+                {form.workArrangement === 'remote' ? '🌏 Remote - Country Restriction' : '📍 Location'}
               </label>
               <input
                 className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder={
-                  form.source === 'referral' ? 'e.g. John Smith (ex-Atlassian)' :
-                  form.source === 'recruiter_outreach' ? 'e.g. recruiter@canva.com or 0412 345 678' :
-                  form.source === 'community' ? 'e.g. Sydney Tech Jobs Slack' :
-                  form.source === 'other' ? 'e.g. WhatsApp group, SMS' :
-                  'https://...'
+                  form.workArrangement === 'remote'
+                    ? 'e.g. Australia only / Worldwide'
+                    : 'e.g. CBD, Pyrmont, Surry Hills'
                 }
-                value={form.url}
-                onChange={e => setForm({ ...form, url: e.target.value })}
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="text-sm text-slate-300 mb-1 block">Notes</label>
-              <textarea
-                className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="Anything you want to remember about this role..."
-                rows={3}
-                value={form.notes}
-                onChange={e => setForm({ ...form, notes: e.target.value })}
+                value={form.location}
+                onChange={e => setForm({ ...form, location: e.target.value })}
               />
             </div>
           </div>
+
+          {/* Outbound specific */}
+          {form.type === 'outbound' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-white/10">
+              <div>
+                <label className="text-sm text-slate-300 mb-1 block">Source</label>
+                <select
+                  className="w-full bg-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  value={form.source}
+                  onChange={e => setForm({ ...form, source: e.target.value })}
+                >
+                  <option value="linkedin">💼 LinkedIn</option>
+                  <option value="seek">🔍 Seek</option>
+                  <option value="career_page">🏢 Company Career Page</option>
+                  <option value="referral">👤 Referral</option>
+                  <option value="community">💬 Community / Event</option>
+                  <option value="other">🌐 Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm text-slate-300 mb-1 block">
+                  {form.source === 'referral' ? '👤 Referred by' :
+                    form.source === 'community' ? '💬 Where' : '🔗 URL'}
+                </label>
+                <input
+                  className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  placeholder={
+                    form.source === 'referral' ? 'e.g. John Smith (ex-Atlassian)' :
+                      form.source === 'community' ? 'e.g. Sydney Tech Jobs Slack' :
+                        'https://...'
+                  }
+                  value={form.url}
+                  onChange={e => setForm({ ...form, url: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-sm text-slate-300 mb-1 block">⏰ Apply Before</label>
+                <input
+                  type="date"
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full bg-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  value={form.applyBefore}
+                  onChange={e => setForm({ ...form, applyBefore: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Inbound specific */}
+          {form.type === 'inbound' && (
+            <div className="space-y-4 pt-4 border-t border-white/10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-slate-300 mb-1 block">👤 Contact Name</label>
+                  <input
+                    className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    placeholder="e.g. Sarah from Atlassian"
+                    value={form.contactName}
+                    onChange={e => setForm({ ...form, contactName: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-slate-300 mb-1 block">Contacted via</label>
+                  <select
+                    className="w-full bg-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    value={form.contactVia}
+                    onChange={e => setForm({ ...form, contactVia: e.target.value })}
+                  >
+                    <option value="email">📧 Email</option>
+                    <option value="phone">📞 Phone</option>
+                    <option value="linkedin">💼 LinkedIn Message</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-300 mb-1 block">
+                    {form.contactVia === 'email' ? '📧 Their Email' :
+                      form.contactVia === 'phone' ? '📞 Their Number' :
+                        '💼 Their LinkedIn'}
+                  </label>
+                  <input
+                    className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    placeholder={
+                      form.contactVia === 'email' ? 'recruiter@company.com' :
+                        form.contactVia === 'phone' ? '+61 4XX XXX XXX' :
+                          'linkedin.com/in/...'
+                    }
+                    value={form.contactDetail}
+                    onChange={e => setForm({ ...form, contactDetail: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-slate-300 mb-1 block">⏰ Respond By</label>
+                  <input
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full bg-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    value={form.respondBy}
+                    onChange={e => setForm({ ...form, respondBy: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* They asked for */}
+              <div>
+                <label className="text-sm text-slate-300 mb-2 block">They asked for</label>
+                <div className="flex flex-wrap gap-2">
+                  {['Resume', 'Current CTC/Rate', 'Expected CTC/Rate', 'Availability',
+                    'Notice Period', 'Work Rights', 'VEVO Copy'].map(item => (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => toggleAskedFor(item)}
+                        className={`px-3 py-1 rounded-full text-sm transition ${form.theyAskedFor.includes(item)
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-white/10 text-slate-300 hover:bg-white/20'
+                          }`}
+                      >
+                        {item}
+                      </button>
+                    ))}
+                </div>
+              </div>
+
+              {/* Your responses */}
+              <div className="border-t border-white/10 pt-4">
+                <label className="text-sm text-blue-300 mb-3 block font-semibold">
+                  📝 What you responded
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                  {/* Current role */}
+                  <div>
+                    <label className="text-sm text-slate-300 mb-1 block">Your Current Role Type</label>
+                    <select
+                      className="w-full bg-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      value={form.currentRoleType}
+                      onChange={e => setForm({ ...form, currentRoleType: e.target.value })}
+                    >
+                      <option value="permanent">💼 Permanent</option>
+                      <option value="contract_daily">📋 Contract - Daily Rate</option>
+                      <option value="contract_hourly">📋 Contract - Hourly Rate</option>
+                      <option value="contract_annual">📋 Contract - Annual CTC</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-slate-300 mb-1 block">
+                      {rateLabel(form.currentRoleType)} (Current)
+                    </label>
+                    <input
+                      className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      placeholder={ratePlaceholder(form.currentRoleType)}
+                      value={form.currentRate}
+                      onChange={e => setForm({ ...form, currentRate: e.target.value })}
+                    />
+                  </div>
+
+                  {/* Expected for new role */}
+                  <div>
+                    <label className="text-sm text-slate-300 mb-1 block">
+                      {rateLabel(form.employmentType)} (Expected)
+                    </label>
+                    <input
+                      className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      placeholder={ratePlaceholder(form.employmentType)}
+                      value={form.expectedRate}
+                      onChange={e => setForm({ ...form, expectedRate: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-slate-300 mb-1 block">Availability</label>
+                    <input
+                      className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      placeholder="e.g. 2 weeks / Immediate"
+                      value={form.availability}
+                      onChange={e => setForm({ ...form, availability: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-slate-300 mb-1 block">Notice Period</label>
+                    <input
+                      className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      placeholder="e.g. 1 month"
+                      value={form.noticePeriod}
+                      onChange={e => setForm({ ...form, noticePeriod: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-slate-300 mb-1 block">Work Rights</label>
+                    <input
+                      className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      placeholder="e.g. Australian PR, no sponsorship needed"
+                      value={form.workRights}
+                      onChange={e => setForm({ ...form, workRights: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-slate-300 mb-1 block">Resume Sent?</label>
+                    <select
+                      className="w-full bg-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      value={form.resumeSent}
+                      onChange={e => setForm({ ...form, resumeSent: e.target.value })}
+                    >
+                      <option value="not_yet">Not Yet</option>
+                      <option value="yes">✅ Yes</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-slate-300 mb-1 block">VEVO Copy Sent?</label>
+                    <select
+                      className="w-full bg-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      value={form.vevoCopy}
+                      onChange={e => setForm({ ...form, vevoCopy: e.target.value })}
+                    >
+                      <option value="not_yet">Not Yet</option>
+                      <option value="yes">✅ Yes</option>
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="text-sm text-slate-300 mb-1 block">Response Notes</label>
+                    <textarea
+                      className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      placeholder="Anything else you said or promised..."
+                      rows={2}
+                      value={form.responseNotes}
+                      onChange={e => setForm({ ...form, responseNotes: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Notes — always visible */}
+          <div className="pt-4 border-t border-white/10">
+            <label className="text-sm text-slate-300 mb-1 block">Notes</label>
+            <textarea
+              className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="Anything you want to remember about this role..."
+              rows={2}
+              value={form.notes}
+              onChange={e => setForm({ ...form, notes: e.target.value })}
+            />
+          </div>
+
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="mt-4 w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-800 text-white font-semibold py-3 rounded-xl transition"
+            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-800 text-white font-semibold py-3 rounded-xl transition"
           >
             {loading ? 'Saving...' : '⚡ Save Lead'}
           </button>
@@ -179,23 +552,59 @@ export default function LeadsPage() {
             {leads.map(lead => (
               <div key={lead.id} className="bg-white/10 rounded-2xl p-5 hover:bg-white/15 transition">
                 <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className={`w-2 h-2 rounded-full ${priorityColor(lead.priority)}`} />
                       <h3 className="font-semibold text-lg">{lead.company}</h3>
                       <span className="text-slate-400 text-sm">{priorityEmoji(lead.priority)} {lead.priority}</span>
+                      <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full">
+                        {lead.type === 'inbound' ? '📩 Inbound' : '🔍 Outbound'}
+                      </span>
+                      {lead.employmentType && (
+                        <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full">
+                          {empTypeLabel(lead.employmentType)}
+                        </span>
+                      )}
+                      {lead.workArrangement && (
+                        <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full">
+                          {lead.workArrangement === 'remote' ? '🏠 Remote' :
+                            lead.workArrangement === 'hybrid' ? '🔄 Hybrid' : '🏢 Onsite'}
+                        </span>
+                      )}
                     </div>
                     <p className="text-blue-200 mt-1">{lead.role}</p>
+                    {lead.location && (
+                      <p className="text-slate-400 text-sm mt-1">📍 {lead.location}</p>
+                    )}
+                    {lead.rateAmount && (
+                      <p className="text-green-400 text-sm mt-1">
+                        💰 {lead.rateAmount}
+                        {lead.contractDuration ? ` · ${lead.contractDuration}` : ''}
+                      </p>
+                    )}
+                    {lead.type === 'inbound' && lead.contactName && (
+                      <p className="text-slate-400 text-sm mt-1">👤 {lead.contactName}</p>
+                    )}
+                    {lead.type === 'inbound' && lead.respondBy && (
+                      <p className="text-yellow-400 text-sm mt-1">
+                        ⏰ Respond by {new Date(lead.respondBy).toLocaleDateString()}
+                      </p>
+                    )}
+                    {lead.type === 'outbound' && lead.applyBefore && (
+                      <p className="text-yellow-400 text-sm mt-1">
+                        ⏰ Apply before {new Date(lead.applyBefore).toLocaleDateString()}
+                      </p>
+                    )}
                     {lead.url && (
                       <a href={lead.url} target="_blank" className="text-sm text-blue-400 hover:underline mt-1 block">
-                        🔗 {lead.source} link
+                        🔗 View posting
                       </a>
                     )}
                     {lead.notes && (
                       <p className="text-slate-400 text-sm mt-2">📝 {lead.notes}</p>
                     )}
                   </div>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-slate-500 ml-4">
                     {new Date(lead.createdAt).toLocaleDateString()}
                   </span>
                 </div>
