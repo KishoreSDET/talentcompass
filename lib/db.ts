@@ -82,24 +82,23 @@ export const applications = sqliteTable('applications', {
   withdrawalReason: text('withdrawal_reason'),
 
   notes: text('notes'),
+  jdText: text('jd_text'),
   createdAt: text('created_at').notNull(),
 });
 
 // ─── INTERVIEW ROUNDS TABLE ──────────────────────────────────────────────────
 export const interviewRounds = sqliteTable('interview_rounds', {
   id: integer('id').primaryKey({ autoIncrement: true }),
-  applicationId: integer('application_id').notNull(), // links to applications table
-
+  applicationId: integer('application_id').notNull(),
   roundNumber: integer('round_number').notNull(),
   roundType: text('round_type').notNull(),
-  // phone_screen / technical / system_design / cultural_fit / final / other
   scheduledDate: text('scheduled_date'),
-  duration: text('duration'),                          // e.g. "45 mins"
+  duration: text('duration'),                        // for interview rounds only
+  submissionDeadline: text('submission_deadline'),   // for take_home and online_assessment only
   interviewerName: text('interviewer_name'),
   interviewerRole: text('interviewer_role'),
-  notes: text('notes'),                                // what was asked
+  notes: text('notes'),
   outcome: text('outcome').default('pending'),
-  // pending / passed / failed / withdrawn
   createdAt: text('created_at').notNull(),
 });
 
@@ -172,6 +171,7 @@ sqlite.exec(`
     feedback_notes TEXT,
     withdrawal_reason TEXT,
     notes TEXT,
+    jd_text TEXT,
     created_at TEXT NOT NULL
   )
 `);
@@ -184,6 +184,7 @@ sqlite.exec(`
     round_type TEXT NOT NULL,
     scheduled_date TEXT,
     duration TEXT,
+    submission_deadline TEXT,
     interviewer_name TEXT,
     interviewer_role TEXT,
     notes TEXT,
@@ -194,6 +195,16 @@ sqlite.exec(`
 
 // ─── SAFE MIGRATIONS ─────────────────────────────────────────────────────────
 const leadsColumns = (sqlite.prepare(`PRAGMA table_info(leads)`).all() as { name: string }[]).map(c => c.name);
+// Safe migrations for applications
+const appColumns = (sqlite.prepare(`PRAGMA table_info(applications)`).all() as { name: string }[]).map(c => c.name);
+const appNewCols = [
+  { name: 'jd_text', definition: 'TEXT' },
+];
+for (const col of appNewCols) {
+  if (!appColumns.includes(col.name)) {
+    sqlite.exec(`ALTER TABLE applications ADD COLUMN ${col.name} ${col.definition}`);
+  }
+}
 const leadsNewCols = [
   { name: 'apply_before', definition: 'TEXT' },
   { name: 'rate_amount', definition: 'TEXT' },
@@ -205,5 +216,16 @@ const leadsNewCols = [
 for (const col of leadsNewCols) {
   if (!leadsColumns.includes(col.name)) {
     sqlite.exec(`ALTER TABLE leads ADD COLUMN ${col.name} ${col.definition}`);
+  }
+}
+
+// Safe migrations for interview_rounds
+const roundColumns = (sqlite.prepare(`PRAGMA table_info(interview_rounds)`).all() as { name: string }[]).map(c => c.name);
+const roundNewCols = [
+  { name: 'submission_deadline', definition: 'TEXT' },
+];
+for (const col of roundNewCols) {
+  if (!roundColumns.includes(col.name)) {
+    sqlite.exec(`ALTER TABLE interview_rounds ADD COLUMN ${col.name} ${col.definition}`);
   }
 }

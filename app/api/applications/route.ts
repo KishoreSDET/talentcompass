@@ -22,6 +22,7 @@ export async function POST(request: Request) {
       portfolioSent, salaryDiscussed, salaryDetails,
       hiringManager, recruiterName, internalContact,
       nextAction, nextActionDate, notes,
+      jdText,
     } = body;
 
     if (!company || !role || !dateApplied) {
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
       nextAction: nextAction || null,
       nextActionDate: nextActionDate || null,
       notes: notes || null,
+      jdText: jdText || null,
       createdAt: new Date().toISOString(),
     }).run();
 
