@@ -31,6 +31,7 @@ type Application = {
   feedbackNotes: string;
   withdrawalReason: string;
   notes: string;
+  jdText: string;
   createdAt: string;
 };
 
@@ -41,6 +42,7 @@ type InterviewRound = {
   roundType: string;
   scheduledDate: string;
   duration: string;
+  submissionDeadline: string;
   interviewerName: string;
   interviewerRole: string;
   notes: string;
@@ -68,12 +70,14 @@ const emptyForm = {
   nextAction: '',
   nextActionDate: '',
   notes: '',
+  jdText: '',
 };
 
 const emptyRoundForm = {
   roundType: 'phone_screen',
   scheduledDate: '',
   duration: '',
+  submissionDeadline: '',
   interviewerName: '',
   interviewerRole: '',
   notes: '',
@@ -81,27 +85,27 @@ const emptyRoundForm = {
 };
 
 const statusConfig: Record<string, { label: string; color: string; emoji: string }> = {
-  applied:      { label: 'Applied',       color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40',  emoji: '🟡' },
-  under_review: { label: 'Under Review',  color: 'bg-blue-500/20 text-blue-300 border-blue-500/40',        emoji: '🔵' },
-  interviewing: { label: 'Interviewing',  color: 'bg-purple-500/20 text-purple-300 border-purple-500/40',  emoji: '🎯' },
-  offer:        { label: 'Offer',         color: 'bg-green-500/20 text-green-300 border-green-500/40',     emoji: '💰' },
-  accepted:     { label: 'Accepted',      color: 'bg-green-600/20 text-green-400 border-green-600/40',     emoji: '✅' },
-  rejected:     { label: 'Rejected',      color: 'bg-red-500/20 text-red-300 border-red-500/40',           emoji: '❌' },
-  withdrawn:    { label: 'Withdrawn',     color: 'bg-slate-500/20 text-slate-300 border-slate-500/40',     emoji: '🚪' },
+  applied: { label: 'Applied', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40', emoji: '🟡' },
+  under_review: { label: 'Under Review', color: 'bg-blue-500/20 text-blue-300 border-blue-500/40', emoji: '🔵' },
+  interviewing: { label: 'Interviewing', color: 'bg-purple-500/20 text-purple-300 border-purple-500/40', emoji: '🎯' },
+  offer: { label: 'Offer', color: 'bg-green-500/20 text-green-300 border-green-500/40', emoji: '💰' },
+  accepted: { label: 'Accepted', color: 'bg-green-600/20 text-green-400 border-green-600/40', emoji: '✅' },
+  rejected: { label: 'Rejected', color: 'bg-red-500/20 text-red-300 border-red-500/40', emoji: '❌' },
+  withdrawn: { label: 'Withdrawn', color: 'bg-slate-500/20 text-slate-300 border-slate-500/40', emoji: '🚪' },
 };
 
 const roundTypeLabel: Record<string, string> = {
-  phone_screen:      '📞 Phone Screen',
-  technical_1:       '💻 Technical Interview 1',
-  technical_2:       '💻 Technical Interview 2',
-  technical_3:       '💻 Technical Interview 3',
-  system_design:     '🏗️ System Design',
-  take_home:         '📝 Take Home Assignment',
+  phone_screen: '📞 Phone Screen',
+  technical_1: '💻 Technical Interview 1',
+  technical_2: '💻 Technical Interview 2',
+  technical_3: '💻 Technical Interview 3',
+  system_design: '🏗️ System Design',
+  take_home: '📝 Take Home Assignment',
   online_assessment: '💯 Online Assessment (Codility / HackerRank)',
-  cultural_fit:      '🤝 Cultural Fit',
-  hr_round:          '👔 HR Round',
-  final:             '🎯 Final Round',
-  other:             '📋 Other',
+  cultural_fit: '🤝 Cultural Fit',
+  hr_round: '👔 HR Round',
+  final: '🎯 Final Round',
+  other: '📋 Other',
 };
 
 const hasDeadline = (roundType: string) =>
@@ -180,7 +184,21 @@ export default function ApplicationsPage() {
 
   const handleEdit = (app: Application) => {
     setEditingId(app.id);
-    setForm({ ...emptyForm, ...app });
+    setForm({
+      ...emptyForm,
+      ...app,
+      location: app.location || '',
+      jobUrl: app.jobUrl || '',
+      resumeVersion: app.resumeVersion || '',
+      salaryDetails: app.salaryDetails || '',
+      hiringManager: app.hiringManager || '',
+      recruiterName: app.recruiterName || '',
+      internalContact: app.internalContact || '',
+      nextAction: app.nextAction || '',
+      nextActionDate: app.nextActionDate || '',
+      notes: app.notes || '',
+      jdText: app.jdText || '',
+    });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -465,10 +483,10 @@ export default function ApplicationsPage() {
 
             {/* Next Action */}
             <div className="pt-4 border-t border-white/10">
-              <p className="text-sm text-blue-300 font-semibold mb-3">⏭️ Next Action</p>
+              <p className="text-sm text-blue-300 font-semibold mb-3">📬 Follow Up Action</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-slate-300 mb-1 block">What</label>
+                  <label className="text-sm text-slate-300 mb-1 block">What needs to be done</label>
                   <input
                     className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     placeholder="e.g. Follow up if no response"
@@ -487,6 +505,19 @@ export default function ApplicationsPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* JD Text */}
+            <div className="pt-4 border-t border-white/10">
+              <label className="text-sm text-blue-300 font-semibold mb-1 block">📄 Job Description</label>
+              <p className="text-xs text-slate-400 mb-2">Paste the full JD here — AI will use this to help you prepare for each round</p>
+              <textarea
+                className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="Paste the full job description here..."
+                rows={6}
+                value={form.jdText}
+                onChange={e => setForm({ ...form, jdText: e.target.value })}
+              />
             </div>
 
             {/* Notes */}
@@ -552,7 +583,7 @@ export default function ApplicationsPage() {
                       {app.workArrangement && (
                         <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full">
                           {app.workArrangement === 'remote' ? '🏠 Remote' :
-                           app.workArrangement === 'hybrid' ? '🔄 Hybrid' : '🏢 Onsite'}
+                            app.workArrangement === 'hybrid' ? '🔄 Hybrid' : '🏢 Onsite'}
                         </span>
                       )}
                     </div>
@@ -564,7 +595,7 @@ export default function ApplicationsPage() {
                     </div>
                     {app.nextAction && (
                       <p className="text-yellow-400 text-sm mt-2">
-                        ⏭️ {app.nextAction}
+                        📬 Follow up: {app.nextAction}
                         {app.nextActionDate ? ` by ${new Date(app.nextActionDate).toLocaleDateString()}` : ''}
                       </p>
                     )}
@@ -713,54 +744,73 @@ export default function ApplicationsPage() {
                               <option value="failed">❌ Failed</option>
                               <option value="withdrawn">🚪 Withdrawn</option>
                             </select>
-                            <input
-                              type="date"
-                              className="bg-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
-                              value={roundForm.scheduledDate}
-                              onChange={e => setRoundForm({ ...roundForm, scheduledDate: e.target.value })}
-                            />
-                            {hasDeadline(roundForm.roundType) && (
-                              <input
-                                type="date"
-                                min={today}
-                                className="bg-red-900/40 border border-red-500/40 rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
-                                placeholder="Submission deadline"
-                                value={roundForm.duration}
-                                onChange={e => setRoundForm({ ...roundForm, duration: e.target.value })}
-                              />
+
+                            {/* Assignment / Online Assessment fields */}
+                            {hasDeadline(roundForm.roundType) ? (
+                              <>
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-xs text-slate-400">📅 Assigned Date</label>
+                                  <input
+                                    type="date"
+                                    max={today}
+                                    className="bg-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
+                                    value={roundForm.scheduledDate}
+                                    onChange={e => setRoundForm({ ...roundForm, scheduledDate: e.target.value })}
+                                  />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-xs text-red-400">🔴 Submission Deadline</label>
+                                  <input
+                                    type="date"
+                                    min={today}
+                                    className="bg-red-900/40 border border-red-500/40 rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
+                                    value={roundForm.submissionDeadline}
+                                    onChange={e => setRoundForm({ ...roundForm, submissionDeadline: e.target.value })}
+                                  />
+                                </div>
+                              </>
+                            ) : (
+                              /* Interview round fields */
+                              <>
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-xs text-slate-400">📅 Date (when it happened)</label>
+                                  <input
+                                    type="date"
+                                    max={today}
+                                    className="bg-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
+                                    value={roundForm.scheduledDate}
+                                    onChange={e => setRoundForm({ ...roundForm, scheduledDate: e.target.value })}
+                                  />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-xs text-slate-400">⏱️ Duration</label>
+                                  <input
+                                    className="bg-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none"
+                                    placeholder="e.g. 45 mins"
+                                    value={roundForm.duration}
+                                    onChange={e => setRoundForm({ ...roundForm, duration: e.target.value })}
+                                  />
+                                </div>
+                                <input
+                                  className="bg-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none"
+                                  placeholder="Interviewer name"
+                                  value={roundForm.interviewerName}
+                                  onChange={e => setRoundForm({ ...roundForm, interviewerName: e.target.value })}
+                                />
+                                <input
+                                  className="bg-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none"
+                                  placeholder="Their role e.g. EM"
+                                  value={roundForm.interviewerRole}
+                                  onChange={e => setRoundForm({ ...roundForm, interviewerRole: e.target.value })}
+                                />
+                              </>
                             )}
-                        {hasDeadline(roundForm.roundType) && (
-                          <input
-                            type="date"
-                            min={today}
-                            className="bg-red-900/40 border border-red-500/40 rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
-                            placeholder="Submission deadline"
-                            value={roundForm.duration}
-                            onChange={e => setRoundForm({ ...roundForm, duration: e.target.value })}
-                          />
-                        )}
-                            <input
-                              className="bg-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none"
-                              placeholder="Duration e.g. 45 mins"
-                              value={roundForm.duration}
-                              onChange={e => setRoundForm({ ...roundForm, duration: e.target.value })}
-                            />
-                            <input
-                              className="bg-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none"
-                              placeholder="Interviewer name"
-                              value={roundForm.interviewerName}
-                              onChange={e => setRoundForm({ ...roundForm, interviewerName: e.target.value })}
-                            />
-                            <input
-                              className="bg-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none"
-                              placeholder="Their role e.g. EM"
-                              value={roundForm.interviewerRole}
-                              onChange={e => setRoundForm({ ...roundForm, interviewerRole: e.target.value })}
-                            />
                           </div>
                           <textarea
                             className="w-full bg-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none"
-                            placeholder="What was asked, topics covered..."
+                            placeholder={hasDeadline(roundForm.roundType)
+                              ? 'Brief description of the assignment...'
+                              : 'What was asked, topics covered, your notes...'}
                             rows={2}
                             value={roundForm.notes}
                             onChange={e => setRoundForm({ ...roundForm, notes: e.target.value })}
@@ -785,15 +835,14 @@ export default function ApplicationsPage() {
                               <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">
                                 {roundTypeLabel[round.roundType] || round.roundType}
                               </span>
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                round.outcome === 'passed' ? 'bg-green-500/20 text-green-300' :
-                                round.outcome === 'failed' ? 'bg-red-500/20 text-red-300' :
-                                round.outcome === 'withdrawn' ? 'bg-slate-500/20 text-slate-300' :
-                                'bg-yellow-500/20 text-yellow-300'
-                              }`}>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${round.outcome === 'passed' ? 'bg-green-500/20 text-green-300' :
+                                  round.outcome === 'failed' ? 'bg-red-500/20 text-red-300' :
+                                    round.outcome === 'withdrawn' ? 'bg-slate-500/20 text-slate-300' :
+                                      'bg-yellow-500/20 text-yellow-300'
+                                }`}>
                                 {round.outcome === 'passed' ? '✅ Passed' :
-                                 round.outcome === 'failed' ? '❌ Failed' :
-                                 round.outcome === 'withdrawn' ? '🚪 Withdrawn' : '⏳ Pending'}
+                                  round.outcome === 'failed' ? '❌ Failed' :
+                                    round.outcome === 'withdrawn' ? '🚪 Withdrawn' : '⏳ Pending'}
                               </span>
                             </div>
                             {round.scheduledDate && (
@@ -820,6 +869,7 @@ export default function ApplicationsPage() {
                                   roundType: round.roundType,
                                   scheduledDate: round.scheduledDate || '',
                                   duration: round.duration || '',
+                                  submissionDeadline: round.submissionDeadline || '',
                                   interviewerName: round.interviewerName || '',
                                   interviewerRole: round.interviewerRole || '',
                                   notes: round.notes || '',
@@ -848,7 +898,7 @@ export default function ApplicationsPage() {
                       </p>
                       <div className="grid grid-cols-2 gap-2">
                         <select
-                          className="bg-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
+                          className="bg-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none col-span-2"
                           value={roundForm.roundType}
                           onChange={e => setRoundForm({ ...roundForm, roundType: e.target.value })}
                         >
@@ -856,45 +906,73 @@ export default function ApplicationsPage() {
                             <option key={key} value={key}>{label}</option>
                           ))}
                         </select>
-                        <input
-                          type="date"
-                          className="bg-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
-                          placeholder={hasDeadline(roundForm.roundType) ? 'Scheduled date' : 'Scheduled date'}
-                          value={roundForm.scheduledDate}
-                          onChange={e => setRoundForm({ ...roundForm, scheduledDate: e.target.value })}
-                        />
-                        {hasDeadline(roundForm.roundType) && (
-                          <input
-                            type="date"
-                            min={today}
-                            className="bg-red-900/40 border border-red-500/40 rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
-                            placeholder="Submission deadline"
-                            value={roundForm.duration}
-                            onChange={e => setRoundForm({ ...roundForm, duration: e.target.value })}
-                          />
+
+                        {/* Assignment / Online Assessment fields */}
+                        {hasDeadline(roundForm.roundType) ? (
+                          <>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-xs text-slate-400">📅 Assigned Date</label>
+                              <input
+                                type="date"
+                                max={today}
+                                className="bg-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
+                                value={roundForm.scheduledDate}
+                                onChange={e => setRoundForm({ ...roundForm, scheduledDate: e.target.value })}
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-xs text-red-400">🔴 Submission Deadline</label>
+                              <input
+                                type="date"
+                                min={today}
+                                className="bg-red-900/40 border border-red-500/40 rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
+                                value={roundForm.submissionDeadline}
+                                onChange={e => setRoundForm({ ...roundForm, submissionDeadline: e.target.value })}
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          /* Interview round fields */
+                          <>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-xs text-slate-400">📅 Date (when it happened)</label>
+                              <input
+                                type="date"
+                                max={today}
+                                className="bg-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none"
+                                value={roundForm.scheduledDate}
+                                onChange={e => setRoundForm({ ...roundForm, scheduledDate: e.target.value })}
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-xs text-slate-400">⏱️ Duration</label>
+                              <input
+                                className="bg-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none"
+                                placeholder="e.g. 45 mins"
+                                value={roundForm.duration}
+                                onChange={e => setRoundForm({ ...roundForm, duration: e.target.value })}
+                              />
+                            </div>
+                            <input
+                              className="bg-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none"
+                              placeholder="Interviewer name"
+                              value={roundForm.interviewerName}
+                              onChange={e => setRoundForm({ ...roundForm, interviewerName: e.target.value })}
+                            />
+                            <input
+                              className="bg-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none"
+                              placeholder="Their role e.g. Engineering Manager"
+                              value={roundForm.interviewerRole}
+                              onChange={e => setRoundForm({ ...roundForm, interviewerRole: e.target.value })}
+                            />
+                          </>
                         )}
-                        <input
-                          className="bg-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none"
-                          placeholder="Duration e.g. 45 mins"
-                          value={roundForm.duration}
-                          onChange={e => setRoundForm({ ...roundForm, duration: e.target.value })}
-                        />
-                        <input
-                          className="bg-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none"
-                          placeholder="Interviewer name"
-                          value={roundForm.interviewerName}
-                          onChange={e => setRoundForm({ ...roundForm, interviewerName: e.target.value })}
-                        />
-                        <input
-                          className="bg-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none col-span-2"
-                          placeholder="Their role e.g. Engineering Manager"
-                          value={roundForm.interviewerRole}
-                          onChange={e => setRoundForm({ ...roundForm, interviewerRole: e.target.value })}
-                        />
                       </div>
                       <textarea
                         className="w-full bg-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none"
-                        placeholder="What was asked, topics covered, your notes..."
+                        placeholder={hasDeadline(roundForm.roundType)
+                          ? 'Brief description of the assignment...'
+                          : 'What was asked, topics covered, your notes...'}
                         rows={3}
                         value={roundForm.notes}
                         onChange={e => setRoundForm({ ...roundForm, notes: e.target.value })}

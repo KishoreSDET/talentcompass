@@ -26,8 +26,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       applicationId, roundNumber, roundType,
-      scheduledDate, duration, interviewerName,
-      interviewerRole, notes, outcome,
+      scheduledDate, duration, submissionDeadline,
+      interviewerName, interviewerRole, notes, outcome,
     } = body;
 
     if (!applicationId || !roundType) {
@@ -43,6 +43,7 @@ export async function POST(request: Request) {
       roundType,
       scheduledDate: scheduledDate || null,
       duration: duration || null,
+      submissionDeadline: submissionDeadline || null,
       interviewerName: interviewerName || null,
       interviewerRole: interviewerRole || null,
       notes: notes || null,
