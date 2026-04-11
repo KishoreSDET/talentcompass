@@ -5,7 +5,7 @@ export default function Home() {
         <div className="text-6xl mb-4">🧭</div>
         <h1 className="text-5xl font-bold mb-4">TalentCompass</h1>
         <p className="text-xl text-blue-200 mb-2">Your AI-powered job search companion</p>
-        <p className="text-md text-slate-400 mb-10">Built for senior tech professionals navigating Sydney's job market</p>
+        <p className="text-md text-slate-400 mb-10">Built for senior tech professionals navigating Sydney&apos;s job market</p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
           <div className="bg-white/10 rounded-2xl p-6 hover:bg-white/20 transition">
