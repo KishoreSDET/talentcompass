@@ -88,8 +88,6 @@ export default function LeadsPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
-  useEffect(() => { setMounted(true); }, []);
-
   const fetchLeads = async () => {
     const res = await fetch('/api/leads');
     const data = await res.json();
@@ -97,8 +95,13 @@ export default function LeadsPage() {
   };
 
   useEffect(() => {
-    fetchLeads();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const initialize = async () => {
+      setMounted(true);
+      const res = await fetch('/api/leads');
+      const data = await res.json();
+      setLeads(data);
+    };
+    initialize();
   }, []);
 
   const toggleAskedFor = (item: string) => {
@@ -338,14 +341,14 @@ export default function LeadsPage() {
               <div>
                 <label className="text-sm text-slate-300 mb-1 block">
                   {form.source === 'referral' ? '👤 Referred by' :
-                   form.source === 'community' ? '💬 Where' : '🔗 URL'}
+                    form.source === 'community' ? '💬 Where' : '🔗 URL'}
                 </label>
                 <input
                   className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   placeholder={
                     form.source === 'referral' ? 'e.g. John Smith (ex-Atlassian)' :
-                    form.source === 'community' ? 'e.g. Sydney Tech Jobs Slack' :
-                    'https://...'
+                      form.source === 'community' ? 'e.g. Sydney Tech Jobs Slack' :
+                        'https://...'
                   }
                   value={form.url}
                   onChange={e => setForm({ ...form, url: e.target.value })}
@@ -392,15 +395,15 @@ export default function LeadsPage() {
                 <div>
                   <label className="text-sm text-slate-300 mb-1 block">
                     {form.contactVia === 'email' ? '📧 Their Email' :
-                     form.contactVia === 'phone' ? '📞 Their Number' :
-                     '💼 Their LinkedIn'}
+                      form.contactVia === 'phone' ? '📞 Their Number' :
+                        '💼 Their LinkedIn'}
                   </label>
                   <input
                     className="w-full bg-white/10 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     placeholder={
                       form.contactVia === 'email' ? 'recruiter@company.com' :
-                      form.contactVia === 'phone' ? '+61 4XX XXX XXX' :
-                      'linkedin.com/in/...'
+                        form.contactVia === 'phone' ? '+61 4XX XXX XXX' :
+                          'linkedin.com/in/...'
                     }
                     value={form.contactDetail}
                     onChange={e => setForm({ ...form, contactDetail: e.target.value })}
@@ -424,19 +427,18 @@ export default function LeadsPage() {
                 <div className="flex flex-wrap gap-2">
                   {['Resume', 'Current CTC/Rate', 'Expected CTC/Rate', 'Availability',
                     'Notice Period', 'Work Rights', 'VEVO Copy'].map(item => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => toggleAskedFor(item)}
-                      className={`px-3 py-1 rounded-full text-sm transition ${
-                        form.theyAskedFor.includes(item)
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => toggleAskedFor(item)}
+                        className={`px-3 py-1 rounded-full text-sm transition ${form.theyAskedFor.includes(item)
                           ? 'bg-blue-500 text-white'
                           : 'bg-white/10 text-slate-300 hover:bg-white/20'
-                      }`}
-                    >
-                      {item}
-                    </button>
-                  ))}
+                          }`}
+                      >
+                        {item}
+                      </button>
+                    ))}
                 </div>
               </div>
 
@@ -613,7 +615,7 @@ export default function LeadsPage() {
                       {lead.workArrangement && (
                         <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full">
                           {lead.workArrangement === 'remote' ? '🏠 Remote' :
-                           lead.workArrangement === 'hybrid' ? '🔄 Hybrid' : '🏢 Onsite'}
+                            lead.workArrangement === 'hybrid' ? '🔄 Hybrid' : '🏢 Onsite'}
                         </span>
                       )}
                     </div>
