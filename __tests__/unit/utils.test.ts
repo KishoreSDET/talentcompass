@@ -1,33 +1,14 @@
-// ─── Utility functions copied from leads page for testing ───────────────────
-const rateLabel = (empType: string): string => {
-  if (empType === 'contract_daily') return '💰 Daily Rate';
-  if (empType === 'contract_hourly') return '💰 Hourly Rate';
-  return '💰 Annual CTC';
-};
+import {
+  rateLabel,
+  ratePlaceholder,
+  priorityColor,
+  priorityEmoji,
+  hasDeadline,
+  empTypeLabel,
+  statusConfig,
+} from '@/lib/utils';
 
-const ratePlaceholder = (empType: string): string => {
-  if (empType === 'contract_daily') return 'e.g. $850/day + super';
-  if (empType === 'contract_hourly') return 'e.g. $120/hr + super';
-  return 'e.g. $185k + super';
-};
-
-const priorityColor = (priority: string): string => {
-  if (priority === 'hot') return 'bg-red-500';
-  if (priority === 'warm') return 'bg-yellow-500';
-  return 'bg-slate-400';
-};
-
-const priorityEmoji = (priority: string): string => {
-  if (priority === 'hot') return '🔥';
-  if (priority === 'warm') return '☀️';
-  return '❄️';
-};
-
-const hasDeadline = (roundType: string): boolean =>
-  ['take_home', 'online_assessment'].includes(roundType);
-
-// ─── Tests ───────────────────────────────────────────────────────────────────
-
+// ─── rateLabel ───────────────────────────────────────────────────────────────
 describe('rateLabel', () => {
   it('returns Daily Rate for contract_daily', () => {
     expect(rateLabel('contract_daily')).toBe('💰 Daily Rate');
@@ -54,6 +35,7 @@ describe('rateLabel', () => {
   });
 });
 
+// ─── ratePlaceholder ─────────────────────────────────────────────────────────
 describe('ratePlaceholder', () => {
   it('returns daily rate placeholder for contract_daily', () => {
     expect(ratePlaceholder('contract_daily')).toBe('e.g. $850/day + super');
@@ -72,6 +54,7 @@ describe('ratePlaceholder', () => {
   });
 });
 
+// ─── priorityColor ───────────────────────────────────────────────────────────
 describe('priorityColor', () => {
   it('returns red for hot priority', () => {
     expect(priorityColor('hot')).toBe('bg-red-500');
@@ -94,6 +77,7 @@ describe('priorityColor', () => {
   });
 });
 
+// ─── priorityEmoji ───────────────────────────────────────────────────────────
 describe('priorityEmoji', () => {
   it('returns fire emoji for hot', () => {
     expect(priorityEmoji('hot')).toBe('🔥');
@@ -112,6 +96,7 @@ describe('priorityEmoji', () => {
   });
 });
 
+// ─── hasDeadline ─────────────────────────────────────────────────────────────
 describe('hasDeadline', () => {
   it('returns true for take_home', () => {
     expect(hasDeadline('take_home')).toBe(true);
@@ -131,5 +116,61 @@ describe('hasDeadline', () => {
 
   it('returns false for empty string', () => {
     expect(hasDeadline('')).toBe(false);
+  });
+});
+
+// ─── empTypeLabel ────────────────────────────────────────────────────────────
+describe('empTypeLabel', () => {
+  it('returns Contract Daily for contract_daily', () => {
+    expect(empTypeLabel('contract_daily')).toBe('📋 Contract (Daily)');
+  });
+
+  it('returns Contract Hourly for contract_hourly', () => {
+    expect(empTypeLabel('contract_hourly')).toBe('📋 Contract (Hourly)');
+  });
+
+  it('returns Contract Annual for contract_annual', () => {
+    expect(empTypeLabel('contract_annual')).toBe('📋 Contract (Annual)');
+  });
+
+  it('returns Permanent for permanent', () => {
+    expect(empTypeLabel('permanent')).toBe('💼 Permanent');
+  });
+
+  it('returns Permanent for unknown type', () => {
+    expect(empTypeLabel('unknown')).toBe('💼 Permanent');
+  });
+});
+
+// ─── statusConfig ────────────────────────────────────────────────────────────
+describe('statusConfig', () => {
+  it('has correct label for applied status', () => {
+    expect(statusConfig['applied'].label).toBe('Applied');
+  });
+
+  it('has correct emoji for applied status', () => {
+    expect(statusConfig['applied'].emoji).toBe('🟡');
+  });
+
+  it('has correct label for interviewing status', () => {
+    expect(statusConfig['interviewing'].label).toBe('Interviewing');
+  });
+
+  it('has correct emoji for rejected status', () => {
+    expect(statusConfig['rejected'].emoji).toBe('❌');
+  });
+
+  it('has correct label for accepted status', () => {
+    expect(statusConfig['accepted'].label).toBe('Accepted');
+  });
+
+  it('has all 7 status types defined', () => {
+    const expectedStatuses = [
+      'applied', 'under_review', 'interviewing',
+      'offer', 'accepted', 'rejected', 'withdrawn'
+    ];
+    expectedStatuses.forEach(status => {
+      expect(statusConfig[status]).toBeDefined();
+    });
   });
 });

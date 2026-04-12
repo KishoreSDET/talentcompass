@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { rateLabel, ratePlaceholder, priorityColor, priorityEmoji, empTypeLabel } from '@/lib/utils';
 
 type Lead = {
   id: number;
@@ -64,18 +65,6 @@ const emptyForm = {
   vevoCopy: 'not_yet',
   resumeSent: 'not_yet',
   responseNotes: '',
-};
-
-const rateLabel = (empType: string) => {
-  if (empType === 'contract_daily') return '💰 Daily Rate';
-  if (empType === 'contract_hourly') return '💰 Hourly Rate';
-  return '💰 Annual CTC';
-};
-
-const ratePlaceholder = (empType: string) => {
-  if (empType === 'contract_daily') return 'e.g. $850/day + super';
-  if (empType === 'contract_hourly') return 'e.g. $120/hr + super';
-  return 'e.g. $185k + super';
 };
 
 const today = new Date().toISOString().split('T')[0];
@@ -161,25 +150,6 @@ export default function LeadsPage() {
     await fetch(`/api/leads?id=${id}`, { method: 'DELETE' });
     setDeleteConfirmId(null);
     await fetchLeads();
-  };
-
-  const priorityColor = (priority: string) => {
-    if (priority === 'hot') return 'bg-red-500';
-    if (priority === 'warm') return 'bg-yellow-500';
-    return 'bg-slate-400';
-  };
-
-  const priorityEmoji = (priority: string) => {
-    if (priority === 'hot') return '🔥';
-    if (priority === 'warm') return '☀️';
-    return '❄️';
-  };
-
-  const empTypeLabel = (empType: string) => {
-    if (empType === 'contract_daily') return '📋 Contract (Daily)';
-    if (empType === 'contract_hourly') return '📋 Contract (Hourly)';
-    if (empType === 'contract_annual') return '📋 Contract (Annual)';
-    return '💼 Permanent';
   };
 
   if (!mounted) return null;
