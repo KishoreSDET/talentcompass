@@ -103,7 +103,8 @@ export const interviewRounds = sqliteTable('interview_rounds', {
 });
 
 // ─── DATABASE CONNECTION ─────────────────────────────────────────────────────
-const sqlite = new Database('talentcompass.db');
+const dbPath = process.env.NODE_ENV === 'test' ? ':memory:' : 'talentcompass.db';
+const sqlite = new Database(dbPath);
 export const db = drizzle(sqlite);
 
 // ─── CREATE TABLES ───────────────────────────────────────────────────────────
