@@ -234,8 +234,7 @@ describe('Leads API', () => {
             await DELETE(deleteReq);
 
             // verify gone
-            const getReq = createMockRequest('GET');
-            const getRes = await GET(getReq);
+            const getRes = await GET();
             const leads = await getRes.json();
             const deletedLead = leads.find((l: { id: number }) => l.id === lead.id);
 
