@@ -23,6 +23,15 @@ const config: Config = {
       statements: 70,
     },
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(@faker-js)/)',
+  ],
+  extensionsToTreatAsEsm: ['.ts'],
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', {
+      useESM: true,
+    }],
+  },
 };
 
 export default config;
